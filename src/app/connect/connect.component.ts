@@ -88,6 +88,10 @@ export class ConnectComponent implements OnInit, OnDestroy {
           } else {
             this.redirectUrl = "/editor/data";
           }
+
+          if (paramMap.has("connectTo")) {
+            this.directConnect(paramMap.get("connectTo"))
+          }
         })
     );
 
@@ -122,6 +126,27 @@ export class ConnectComponent implements OnInit, OnDestroy {
         .useConnection({
           connectionString: this.getCxnParamsConnectionStringFormValue(),
           authInfo: this.getCxnParamsAuthInfoFormValue()
+        })
+        .pipe(
+          switchMap(() => this.router.navigateByUrl(this.redirectUrl)),
+          finalize(() => this.stopLoader()),
+          catchError(err => this.errorMessage = err.toString())
+        )
+        .subscribe()
+    );
+  }
+
+  private directConnect(connectTo): void {
+    this.errorMessage = null;
+    this.startLoader();
+
+    const authInfos: AuthInfo[] = [];
+
+    this.subscription.add(
+      this.connectionManager
+        .useConnection({
+          connectionString: connectTo,
+          authInfo: authInfos
         })
         .pipe(
           switchMap(() => this.router.navigateByUrl(this.redirectUrl)),
